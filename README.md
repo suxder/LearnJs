@@ -1,7 +1,10 @@
 # learnJs
-Some notes about Js
-一、第一天
-**1**.关于 this 的一些思考 与感悟
+# Some notes about Js
+
+## 一、第一天
+
+### **1**.关于 this 的一些思考 与感悟
+
  this这个 keyword非常的困惑,但是其实有一个好方法可以理解.
 
     1. 检查 ' . ' 左边是谁invoke 这个函数. 例如 xiaoming.age();  age函数里面有this, 然后 '. ' 旁边是xiaoming , 那么this就是指向xiaoming了.这种叫做 Implicit Binding.
@@ -13,7 +16,8 @@ Some notes about Js
     4. 上面三个都没有, 检查是不是有arrow function, 有arrow function的话就是, 那么指向是arrow function的lexical binding 的对象. 就是她的parent. 这种叫做 lexical binding
     
     5. 全部都没有如果不是strict mode那就是window对象了.. strict就是 error (undefined).
-***2***.闭包
+### ***2***.闭包
+
   1.当闭包 返回的函数中含有循环变量或者 会变化的变量时：
 
 ```
@@ -47,4 +51,3 @@ function count() {
 ​	但是三个函数都没有被调用，直到var f1 = results[0];，此时function f1() { return i * i;}开始执行，如上段所写，此时的i = 4，所以，返回值就是16了。
 ```
 
-​    2.
