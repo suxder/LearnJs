@@ -51,3 +51,94 @@ function count() {
 ​	但是三个函数都没有被调用，直到var f1 = results[0];，此时function f1() { return i * i;}开始执行，如上段所写，此时的i = 4，所以，返回值就是16了。
 ```
 
+## 二、第二天
+
+### 1.在Js的世界里，一切皆为对象，但是某些对象依然不太一样
+
+```
+typeof 123; // 'number'
+typeof NaN; // 'number'
+typeof 'str'; // 'string'
+typeof true; // 'boolean'
+typeof undefined; // 'undefined'
+typeof Math.abs; // 'function'
+typeof null; // 'object'
+typeof []; // 'object'
+typeof {}; // 'object'
+```
+
+### 2.`null`和`undefined`没有toString()方法，这两个特殊值要除外，虽然`null`还伪装成了`object`类型。
+
+### 3.`number`对象调用`toString()`报SyntaxError：
+
+```
+123.toString(); // SyntaxError
+```
+
+特殊处理为：
+
+```
+123..toString(); // '123', 注意是两个点！
+(123).toString(); // '123'
+```
+
+原因：
+
+```
+个人认为是，它将 123. 看成是一个小数，然后你直接跟toString()，它不会认为 . 是调用方法，而是看成是数字的一部分。
+```
+
+我这样写没有一点问题：
+
+```
+const number = 123;console.log(number.toString());
+```
+
+但是如果直接：
+
+```
+console.log(123.toString());
+```
+
+则会报错。目的是为了消除歧义。
+
+### 4.为什么要用parseInt()或者parseFloat()函数来将其他类型的对象转化为数字
+
+[https://www.cnblogs.com/wangyang0210/p/9526440.html]: 
+
+```
+个人觉得：如上述连接所言，如果使用Number()函数来将其他对象转化为Number，数字值转化正常。而：
+--
+-Boolean值，true->1,false->0
+null值，转为0
+字符串为空，转为0
+字符串中是纯科学计数，数值会直接转为十进制的数值
+undefined , 对象 , 数组 ,字符串不为纯数字和科学计数时 返回NaN
+--
+parseInt()
+--数值正常转化,如果为浮点数,则转为整型,舍弃小数点后的数值
+--
+--数字开头的字符串,只转换数字整数部分,忽略字母部分
+--
+--二进制,八进制,十六进制转化时,转化为十进制的数值
+--
+--科学计数法,能解析时正常解析,不能时返回第一个数字
+--
+--Boolean,undefined , 对象 , 数组 ,空字符串,字符串开头不为纯数字和科学计数时 返回NaN
+--
+-parseFloat()
+--
+--
+--数值正常转化,整型为整型,浮点型为浮点型
+--
+--数字开头的字符串,只转换数字整数部分,忽略字母部分
+--
+--二进制,八进制,十六进制转化时,转化为十进制的数值
+--
+--科学计数法,能解析时正常解析,超出范围则返回Infinity
+--
+--Boolean,undefined , 对象 , 数组 ,空字符串,字符串开头不为纯数字和科学计数时 返回NaN
+--
+--不能有多个小数点报语法错误
+```
+
