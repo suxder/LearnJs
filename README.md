@@ -1,3 +1,7 @@
+---
+
+---
+
 # learnJs
 # Some notes about Js
 
@@ -198,3 +202,319 @@ d.toLocaleString(); // 本地时区
 注意前面名字部分有< >需要转义 \< 、\> ，注意名字字段可能有空格（测试样例有，但实际可以没有），所以在[ ]匹配范围内内需要加。
 
 不能单单看测试样例，还要注意将正则表达式写的更通用。  
+
+## Day5
+
+### 1.JSON
+
+1. JSON是JavaScript Object Notation的缩写，它是一种数据交换格式    
+2.  把任何JavaScript对象变成JSON，就是把这个对象序列化成一个JSON格式的字符串，这样才能够通过网络传递给其他计算机。
+3.   如果我们收到一个JSON格式的字符串，只需要把它反序列化成一个JavaScript对象，就可以在JavaScript中直接使用这个对象了。  
+
+```javascript
+'use strict';
+
+var xiaoming = {
+    name: '小明',
+    age: 14,
+    gender: true,
+    height: 1.65,
+    grade: null,
+    'middle-school': '\"W3C\" Middle School',
+    skills: ['JavaScript', 'Java', 'Python', 'Lisp']
+};
+var s = JSON.stringify(xiaoming);
+console.log(s);
+```
+
+输出为：
+
+```json
+{"name":"小明","age":14,"gender":true,"height":1.65,"grade":null,"middle-school":"\"W3C\" Middle School","skills":["JavaScript","Java","Python","Lisp"]}
+```
+
+加上参数，按缩进输出：
+
+```
+JSON.stringify(xiaoming, null, '  ');
+```
+
+```javascript
+{
+  "name": "小明",
+  "age": 14,
+  "gender": true,
+  "height": 1.65,
+  "grade": null,
+  "middle-school": "\"W3C\" Middle School",
+  "skills": [
+    "JavaScript",
+    "Java",
+    "Python",
+    "Lisp"
+  ]
+}
+```
+
+第一个参数为对象名，第二个参数用于筛选对象的键值，如果我们只想输出指定对象的属性，可以传入一个Array。    
+第二个参数也可以是一个函数名，用于对每个键值对进行预先处理。  
+**拿到一个JSON格式的字符串，我们直接用`JSON.parse()`把它变成一个JavaScript对象。**
+
+`JSON.parse()`还可以接收一个函数，用来转换解析出的属性。
+
+### 2.用JavaScript实现面向对象编程
+
+#### 1.JavaScript不区分类和实例的概念，而是通过原型（prototype）来实现面向对象编程。
+
+#### 2.创建对象
+
+##### 1.原形链
+
+> 当我们用`obj.xxx`访问一个对象的属性时，JavaScript引擎先在当前对象上查找该属性，如果没有找到，就到其原型对象上找，如果还没有找到，就一直上溯到`Object.prototype`对象，最后，如果还没有找到，就只能返回`undefined`。
+
+当我们创建一个Array对象时的原形链：
+
+```javascript
+arr/*数组名*/ ----> Array.prototype ----> Object.prototype ----> null
+```
+
+当我们创建一个函数时的原形链：
+
+```javascript
+foo /*函数名*/ ----> Function.prototype ----> Object.prototype ----> null
+```
+
+> 如果原型链很长，那么访问一个对象的属性就会因为花更多的时间查找而变得更慢，因此要注意不要把原型链搞得太长。
+
+##### 2.构造函数
+
+1.定义一个构造函数（普通函数）：
+
+```javascript
+function Student(name) {
+    this.name = name;
+    this.hello = function () {
+        alert('Hello, ' + this.name + '!');
+    }
+}
+```
+
+2.用new来调用这个函数，并返回一个对象：
+
+```javascript
+var xiaoming = new Student('小明');
+xiaoming.name; // '小明'
+xiaoming.hello(); // Hello, 小明!
+```
+
+> 写了`new`，它就变成了一个构造函数，它绑定的`this`指向新创建的对象，并默认返回`this`，也就是说，不需要在最后写`return this;`
+
+3.xiaoming的原形链:
+
+```
+xiaoming ----> Student.prototype ----> Object.prototype ----> null
+```
+
+## Day6
+
+### 1.构造函数与普通函数
+
+> 为了区分构造函数与普通函数，按照约定，构造函数首字母应该大写，而普通函数首字母应该小写。
+
+**tip:在调用构造函数时，要写new**
+
+### 2.利用空函数实现C++或Java式的继承：
+
+- 创建一个PrimaryStudent函数：
+
+- ```javascript
+  function PrimaryStudent(props) {
+      // 调用Student构造函数，绑定this变量:
+      Student.call(this, props);
+      this.grade = props.grade || 1;
+  }
+  ```
+
+- 此时利用PrimaryStudent构造函数创建的对象的原型链是：
+
+- ```
+  new PrimaryStudent() ----> PrimaryStudent.prototype ----> Object.prototype ----> null
+  ```
+
+- 目标原型链：
+
+- ```
+  new PrimaryStudent() ----> PrimaryStudent.prototype ----> Student.prototype ----> Object.prototype ----> null
+  ```
+
+> 我们必须借助一个中间对象来实现正确的原型链，这个中间对象的原型要指向`Student.prototype`。为了实现这一点，参考道爷（就是发明JSON的那个道格拉斯）的代码，中间对象可以用一个空函数`F`来实现
+
+```javascript
+// PrimaryStudent构造函数:
+function PrimaryStudent(props) {
+    Student.call(this, props);
+    this.grade = props.grade || 1;
+}
+
+// 空函数F:
+function F() {
+}
+
+// 把F的原型指向Student.prototype:
+F.prototype = Student.prototype;
+
+// 把PrimaryStudent的原型指向一个新的F对象，F对象的原型正好指向Student.prototype:
+PrimaryStudent.prototype = new F();
+
+// 把PrimaryStudent原型的构造函数修复为PrimaryStudent:
+PrimaryStudent.prototype.constructor = PrimaryStudent;
+
+// 继续在PrimaryStudent原型（就是new F()对象）上定义方法：
+PrimaryStudent.prototype.getGrade = function () {
+    return this.grade;
+};
+
+// 创建xiaoming:
+var xiaoming = new PrimaryStudent({
+    name: '小明',
+    grade: 2
+});
+xiaoming.name; // '小明'
+xiaoming.grade; // 2
+
+// 验证原型:
+xiaoming.__proto__ === PrimaryStudent.prototype; // true
+xiaoming.__proto__.__proto__ === Student.prototype; // true
+
+// 验证继承关系:
+xiaoming instanceof PrimaryStudent; // true
+xiaoming instanceof Student; // true
+```
+
+> 小结：JavaScript的原型继承实现方式就是：
+>
+> 1. 定义新的构造函数，并在内部用`call()`调用希望“继承”的构造函数，并绑定`this`；
+> 2. 借助中间函数`F`实现原型链继承，最好通过封装的`inherits`函数完成；
+> 3. 继续在新的构造函数的原型上定义新方法。
+
+### 3.class继承
+
+> 由于利用原型实现类和继承的方法过于复杂，ES6引入了新的关键字class ，目的就是使定义类更简单。
+
+新的class式创建类的方法：
+
+```javascript
+class Student {
+    constructor(name) {
+        this.name = name;
+    }
+
+    hello() {
+        alert('Hello, ' + this.name + '!');
+    }
+}
+```
+
+**注意hello函数的关键字function被省略**
+
+新的class式继承方法：
+
+```javascript
+class PrimaryStudent extends Student {
+    constructor(name, grade) {
+        super(name); // 记得用super调用父类的构造方法!
+        this.grade = grade;
+    }
+
+    myGrade() {
+        alert('I am at grade ' + this.grade);
+    }
+}
+```
+
+extends表示原型链对象来自Student  
+通过super(name)来调用父类的构造函数，使得父类的name属性正常初始化。  
+
+### 4.浏览器
+
+- IE 6~11：国内用得最多的IE浏览器，历来对W3C标准支持差。从IE10开始支持ES6标准；
+- Chrome：Google出品的基于Webkit内核浏览器，内置了非常强悍的JavaScript引擎——V8。由于Chrome一经安装就时刻保持自升级，所以不用管它的版本，最新版早就支持ES6了；
+- Safari：Apple的Mac系统自带的基于Webkit内核的浏览器，从OS X 10.7 Lion自带的6.1版本开始支持ES6，目前最新的OS X 10.11 El Capitan自带的Safari版本是9.x，早已支持ES6；
+- Firefox：Mozilla自己研制的Gecko内核和JavaScript引擎OdinMonkey。早期的Firefox按版本发布，后来终于聪明地学习Chrome的做法进行自升级，时刻保持最新；
+- 移动设备上目前iOS和Android两大阵营分别主要使用Apple的Safari和Google的Chrome，由于两者都是Webkit核心，结果HTML5首先在手机上全面普及（桌面绝对是Microsoft拖了后腿），对JavaScript的标准支持也很好，最新版本均支持ES6。
+
+> 不同的浏览器对JavaScript支持的差异主要是，有些API的接口不一样，比如AJAX，File接口。对于ES6标准，不同的浏览器对各个特性支持也不一样。
+>
+> 在编写JavaScript的时候，就要充分考虑到浏览器的差异，尽量让同一份JavaScript代码能运行在不同的浏览器中。
+
+#### 1.浏览器对象
+
+##### window
+
+`window`对象有`innerWidth`和`innerHeight`属性，可以获取浏览器窗口的内部宽度和高度。
+
+e.g.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  	<title>Document</title>
+    <script>
+    	'use strict';
+    	
+    	alert('window innner size:' + window.innerWidth + 'x' + window.innerHeight);
+  </script>
+</head>
+<body>
+</body>
+</html>
+```
+
+对应的，还有一个`outerWidth`和`outerHeight`属性，可以获取浏览器窗口的整个宽高。
+
+##### navigator
+
+`navigator`对象表示浏览器的信息，最常用的属性包括：
+
+- navigator.appName：浏览器名称；
+- navigator.appVersion：浏览器版本；
+- navigator.language：浏览器设置的语言；
+- navigator.platform：操作系统类型；
+- navigator.userAgent：浏览器设定的`User-Agent`字符串。
+
+> `navigator`的信息可以很容易地被用户修改，所以JavaScript读取的值不一定是正确的。
+
+> 扩充知识：短路运算符 
+>
+> 首先我们来解释一下短路运算符：
+>
+> 短路运算符就是从左到右的运算中前者满足要求，就不再执行后者了； 可以理解为：
+>
+>  &&为取假运算，从左到右依次判断，如果遇到一个假值，就返回假值，以后不再执行，否则返回最后一个真值；
+>
+> || 为取真运算，从左到右依次判断，如果遇到一个真值，就返回真值，以后不再执行，否则返回最后一个假值。
+>
+>  下面举个例子吧：
+>
+> let str
+>
+> let num = str || 'foo'
+>
+> 如果str是真值就直接返回了，后面短路就不会被返回了，如果为假值，则会返回后面的foo
+>
+>  let str= param && param.prop
+>
+> 如果param如果为真值则返回param.prop属性，否则返回param这个假值，这样在某些地方防止param为undefined的时候还取其属性造成报错。
+
+##### screen
+
+`screen`对象表示屏幕的信息，常用的属性有：
+
+- screen.width：屏幕宽度，以像素为单位；
+- screen.height：屏幕高度，以像素为单位；
+- screen.colorDepth：返回颜色位数，如8、16、24。
+
+##### location
