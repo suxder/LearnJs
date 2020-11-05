@@ -518,3 +518,281 @@ e.g.
 - screen.colorDepth：返回颜色位数，如8、16、24。
 
 ##### location
+
+`location`对象表示当前页面的URL信息。  
+可以用`location.href`获取完整的URL  要获得URL各个部分的值，可以这么写：
+
+```javascript
+location.protocol; // 'http'
+location.host; // 'www.example.com'
+location.port; // '8080'
+location.pathname; // '/path/index.html'
+location.search; // '?a=1&b=2'
+location.hash; // 'TOP'
+```
+
+##### document
+
+`document`对象表示当前页面。由于HTML在浏览器中以DOM形式表示为树形结构，`document`对象就是整个DOM树的根节点
+
+要查找DOM树的某个节点，需要从`document`对象开始查找。最常用的查找是根据ID和Tag Name。
+
+用`document`对象提供的`getElementById()`和`getElementsByTagName()`可以按ID获得一个DOM节点和按Tag名称获得一组DOM节点:
+
+```html
+<dl id="drink-menu" style="border:solid 1px #ccc;padding:6px;">
+    <dt>摩卡</dt>
+    <dd>热摩卡咖啡</dd>
+    <dt>酸奶</dt>
+    <dd>北京老酸奶</dd>
+    <dt>果汁</dt>
+    <dd>鲜榨苹果汁</dd>
+</dl>
+```
+
+```javascript
+var menu = document.getElementById('drink-menu');
+var drinks = document.getElementsByTagName('dt');
+var i, s;
+
+s = '提供的饮料有:';
+for (i=0; i<drinks.length; i++) {
+    s = s + drinks[i].innerHTML + ',';
+}
+console.log(s);
+```
+
+**Cookie属性**
+
+> `Cookie是由服务器发送的key-value标示符。因为HTTP协议是无状态的，但是服务器要区分到底是哪个用户发过来的请求，就可以用Cookie来区分。当一个用户成功登录后，服务器发送一个Cookie给浏览器，例如user=ABC123XYZ(加密的字符串)...，此后，浏览器访问该网站时，会在请求头附上这个Cookie，服务器根据Cookie即可区分出用户。`
+>
+> `Cookie还可以存储网站的一些设置，例如，页面显示的语言等等。`
+
+Javascript能够通过`document.ducument`读取到当前页面的Cookie  
+由于JavaScript能读取到页面的Cookie，而用户的登录信息通常也存在Cookie中，这就造成了巨大的安全隐患，这是因为在HTML页面中引入第三方的JavaScript代码是允许的  
+
+>  `为了解决这个问题，服务器在设置Cookie时可以使用httpOnly，设定了httpOnly的Cookie将不能被JavaScript读取。这个行为由浏览器实现，主流浏览器均支持httpOnly选项，IE从IE6 SP1开始支持。`
+>
+> `为了确保安全，服务器端在设置Cookie时，应该始终坚持使用httpOnly。`
+
+##### history
+
+JavaScript可以调用`history`对象的`back()`或`forward ()`，相当于用户点击了浏览器的“后退”或“前进”按钮。
+
+> 新手开始设计Web页面时喜欢在登录页登录成功时调用`history.back()`，试图回到登录前的页面。这是一种错误的方法。
+>
+> 任何情况，你都不应该使用`history`这个对象了。
+
+## Day7
+
+### 1.操作DOM
+
+- 始终记住DOM是一个树形结构。操作一个DOM节点实际上就是这么几个操作：
+- - 更新：更新该DOM节点的内容，相当于更新了该DOM节点表示的HTML的内容；
+  - 遍历：遍历该DOM节点下的子节点，以便进行进一步操作；
+  - 添加：在该DOM节点下新增一个子节点，相当于动态增加了一个HTML节点；
+  - 删除：将该节点从HTML中删除，相当于删掉了该DOM节点的内容以及它包含的所有子节点。
+- 在操作一个DOM节点前，我们需要通过各种方式先拿到这个DOM节点。最常用的方法是`document.getElementById()`和`document.getElementsByTagName()`，以及CSS选择器`document.getElementsByClassName()`。
+- 由于ID在HTML文档中是唯一的，所以`document.getElementById()`可以直接定位唯一的一个DOM节点。`document.getElementsByTagName()`和`document.getElementsByClassName()`总是返回一组DOM节点。要精确地选择DOM，可以先定位父节点，再从父节点开始选择，以缩小范围。
+
+例子：
+
+```javascript
+// 返回ID为'test'的节点：
+var test = document.getElementById('test');
+
+// 先定位ID为'test-table'的节点，再返回其内部所有tr节点：
+var trs = document.getElementById('test-table').getElementsByTagName('tr');
+
+// 先定位ID为'test-div'的节点，再返回其内部所有class包含red的节点：
+var reds = document.getElementById('test-div').getElementsByClassName('red');
+
+// 获取节点test下的所有直属子节点:
+var cs = test.children;
+
+// 获取节点test下第一个、最后一个子节点：
+var first = test.firstElementChild;
+var last = test.lastElementChild;
+```
+
+例题：
+
+```html
+<!-- HTML结构 -->
+<div id="test-div">
+<div class="c-red">
+    <p id="test-p">JavaScript</p>
+    <p>Java</p>
+  </div>
+  <div class="c-red c-green">
+    <p>Python</p>
+    <p>Ruby</p>
+    <p>Swift</p>
+  </div>
+  <div class="c-green">
+    <p>Scheme</p>
+    <p>Haskell</p>
+  </div>
+</div>
+```
+
+```javascript
+// 选择<p>JavaScript</p>:
+var js = document.getElementById('test-p');
+var js = document.querySelector('#test-p');
+
+// 选择<p>Python</p>,<p>Ruby</p>,<p>Swift</p>:
+var arr = document.getElementsByClassName('c-red')[1].children;
+var arr = document.getElementsByClassName('c-red')[1].getElementsByTagName('p');
+var arr = document.querySelectorAll('div.c-red.c-green > p');
+var arr = document.querySelectorAll('.c-red.c-green > p');
+var arr = document.querySelectorAll('div[class="c-red c-green"] > p');
+
+
+// 选择<p>Haskell</p>:
+var haskell = document.getElementsByClassName('c-green')[1].lastElementChild;
+var haskell = document.querySelectorAll('div[class="c-green"] > p')[1];
+var haskell = document.querySelectorAll('.c-green > p')[4];
+```
+
+### 2.更新DOM
+
+#### 1.修改`innerHTML`属性
+
+这种方式异常强大，不但可以修改一个DOM节点内的文本内容，该可以通过HTMl片段来修改节点内部的子树。
+
+例：
+
+```javascript
+// 获取<p id="p-id">...</p>
+var p = document.getElementById('p-id');
+// 设置文本为abc:
+p.innerHTML = 'ABC'; // <p id="p-id">ABC</p>
+// 设置HTML:
+p.innerHTML = 'ABC <span style="color:red">RED</span> XYZ';
+// <p>...</p>的内部结构已修改
+```
+
+> 用`innerHTML`时要注意，是否需要写入HTML。如果写入的字符串是通过网络拿到的，要注意对字符编码来避免XSS攻击。
+
+#### 2.修改`innerText`或者`textContent`属性
+
+> 自动会对字符串进行编码，保证无法设置任何HTML标签。
+
+```javascript
+// 获取<p id="p-id">...</p>
+var p = document.getElementById('p-id');
+// 设置文本:
+p.innerText = '<script>alert("Hi")</script>';
+// HTML被自动编码，无法设置一个<script>节点:
+// <p id="p-id">&lt;script&gt;alert("Hi")&lt;/script&gt;</p>
+```
+
+> 在读取属性时，`innerText`不返回任何隐藏元素的文本，`textContent`返回所有文本。
+
+#### 3.修改CSS
+
+DOM节点的`style`属性对应所有的CSS，可以直接获取或设置。因为CSS允许`font-size`这样的名称，但它并非JavaScript有效的属性名，所以需要在JavaScript中改写为**驼峰式**命名`fontSize`：
+
+```javascript
+// 获取<p id="p-id">...</p>
+var p = document.getElementById('p-id');
+// 设置CSS:
+p.style.color = '#ff0000';
+p.style.fontSize = '20px';
+p.style.paddingTop = '2em';
+```
+
+### 3.插入DOM
+
+#### 1.使用`appendChild`,将一个子节点添加到父节点的最后一个子节点。
+
+**例子：**
+
+```html
+<!-- HTML结构 -->
+<p id="js">JavaScript</p>
+<div id="list">
+    <p id="java">Java</p>
+    <p id="python">Python</p>
+    <p id="scheme">Scheme</p>
+</div>
+```
+
+目标:把`<p id="js">JavaScript</p>`添加到`<div id="list">`的最后一项
+
+```javascript
+var
+    js = document.getElementById('js'),
+    list = document.getElementById('list');
+list.appendChild(js);
+```
+
+HTML结构：
+
+```html
+<!-- HTML结构 -->
+<div id="list">
+    <p id="java">Java</p>
+    <p id="python">Python</p>
+    <p id="scheme">Scheme</p>
+    <p id="js">JavaScript</p>
+</div>
+```
+
+> 上述例子存在一些bug，亟待解决
+
+#### 2.创建一个新的节点，插入到指定位置。
+
+```javascript
+var
+    list = document.getElementById('list'),
+    haskell = document.createElement('p');
+haskell.id = 'haskell';
+haskell.innerText = 'Haskell';
+list.appendChild(haskell);
+```
+
+> 动态的创建一个节点，然后添加到DOM树中可以实现很多功能。
+
+##### 1.使用`insertBefore`
+
+使用`parentElement.insertBefore(newElement, referenceElement);`，子节点会插入到`referenceElement`之前。
+
+**例子**：
+
+原有HTMl结构：
+
+```html
+<!-- HTML结构 -->
+<div id="list">
+    <p id="java">Java</p>
+    <p id="python">Python</p>
+    <p id="scheme">Scheme</p>
+</div>
+```
+
+javascript：
+
+```javascript
+var
+    list = document.getElementById('list'),
+    ref = document.getElementById('python'),
+    haskell = document.createElement('p');
+haskell.id = 'haskell';
+haskell.innerText = 'Haskell';
+list.insertBefore(haskell, ref);
+```
+
+新的HTMl结构：
+
+```html
+<!-- HTML结构 -->
+<div id="list">
+    <p id="java">Java</p>
+    <p id="haskell">Haskell</p>
+    <p id="python">Python</p>
+    <p id="scheme">Scheme</p>
+</div>
+```
+
