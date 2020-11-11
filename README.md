@@ -5,7 +5,7 @@
 # learnJs
 # Some notes about Js
 
-## Day1
+## 一、this与闭包
 
 ### **1**.关于 this 的一些思考 与感悟
 
@@ -55,7 +55,7 @@ function count() {
 ​	但是三个函数都没有被调用，直到var f1 = results[0];，此时function f1() { return i * i;}开始执行，如上段所写，此时的i = 4，所以，返回值就是16了。
 ```
 
-## Day2
+## 二、JS中的对象
 
 ### 1.在Js的世界里，一切皆为对象，但是某些对象依然不太一样
 
@@ -796,3 +796,122 @@ list.insertBefore(haskell, ref);
 </div>
 ```
 
+## Day8 
+
+#### 1.操作表单
+
+##### 1.表单的输入控件
+
+HTML表单的输入控件主要有以下几种：
+
+- 文本框，对应的`<input type="text">`，用于输入文本；
+- 口令框，对应的`<input type="password">`，用于输入口令；
+- 单选框，对应的`<input type="radio">`，用于选择一项；
+- 复选框，对应的`<input type="checkbox">`，用于选择多项；
+- 下拉框，对应的`<select>`，用于选择一项；
+- 隐藏文本，对应的`<input type="hidden">`，用户不可见，但表单提交时会把隐藏文本发送到服务器。
+
+##### 2.获取值
+
+###### 1.值是有实际意义的表单控件
+
+对于`text` `password` `select` `hidden` 等可以直接 获取该节点的引用，再用xxx.value 来获取值
+
+###### 2.对于值为HTML预设的表单控件
+
+我们需要获取的是用户是否“勾上了”选项，应该用`checked` 来进行判断：
+
+```javascript
+// <label><input type="radio" name="weekday" id="monday" value="1"> Monday</label>
+// <label><input type="radio" name="weekday" id="tuesday" value="2"> Tuesday</label>
+var mon = document.getElementById('monday');
+var tue = document.getElementById('tuesday');
+mon.value; // '1'
+tue.value; // '2'
+mon.checked; // true或者false
+tue.checked; // true或者false
+```
+
+##### 3.设置值
+
+- 同上，对于`text` `password` `select` `hidden` 等可以直接 获取该节点的引用，再用xxx.value 进行值的设置
+- 对于 单选框 ，设置`checked`为`true` 或 `false` 即可
+
+##### 4.提交表单
+
+> 利用javascript 来对表单提交进行控制有两种方式
+
+###### 1.方式1
+
+利用<form>元素的的submit方法 来进行提交 ，但该方式 会妨碍浏览器默认的提交方式。  
+浏览器默认用户点击<button type = 'submit'>时或者 用户**在最后一个输入框按回车键**提交表单。
+
+```javascript
+<!-- HTML -->
+<form id="test-form">
+    <input type="text" name="test">
+    <button type="button" onclick="doSubmitForm()">Submit</button>
+</form>
+
+<script>
+function doSubmitForm() {
+    var form = document.getElementById('test-form');
+    // 可以在此修改form的input...
+    // 提交form:
+    form.submit();
+}
+</script>
+```
+
+###### 2.方式2
+
+响应<form>本身的`onsubmit`事件，在提交<form>时做修改。  
+ 
+
+```javascript
+<!-- HTML -->
+<form id="test-form" onsubmit="return checkForm()">
+    <input type="text" name="test">
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+function checkForm() {
+    //利用form 指向form节点
+    var form = document.getElementById('test-form');
+    // 可以在此修改form的input...
+    // 继续下一步:
+    return true;
+}
+</script>
+```
+
+##### 5.form
+
+###### 1.利用`hidden`
+
+```javascript
+<!-- HTML -->
+<form id="login-form" method="post" onsubmit="return checkForm()">
+    //文本输入框
+    <input type="text" id="username" name="username">
+    //密码输入框,由于该文本框没有name属性，故该文本框的内容不会被提交
+    <input type="password" id="input-password">
+    //隐藏的文本输入框，最后实际提交的是该隐藏文本框的内容
+    <input type="hidden" id="md5-password" name="password">
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+function checkForm() {
+    var input_pwd = document.getElementById('input-password');
+    var md5_pwd = document.getElementById('md5-password');
+    // 把用户输入的明文变为MD5:
+    md5_pwd.value = toMD5(input_pwd.value);
+    // 继续下一步:
+    return true;
+}
+</script>
+```
+
+> 注意到`id`为`md5-password`的`<input>`标记了`name="password"`，而用户输入的`id`为`input-password`的`<input>`没有`name`属性。没有`name`属性的`<input>`的数据不会被提交。
