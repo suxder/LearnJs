@@ -1001,3 +1001,451 @@ reader.onload = function(e) {
 ```
 
 当文件读取完成后，JavaScript引擎将自动调用我们设置的回调函数。执行回调函数时，文件已经读取完毕，所以我们可以在回调函数内部安全地获得文件内容。
+
+## 十、AJAX
+
+> AJAX不是JavaScript的规范，它只是一个哥们“发明”的缩写：Asynchronous JavaScript and XML，意思就是用JavaScript执行异步网络请求。
+
+### 1.由来
+
+**web的运作原理：一次HTTP请求对应一个页面**    
+在`form`表单中，每次点击一下`submit` 就会刷新一下页面，对应了上面的web运作原理。利用AJAX执行异步网络请求，第一次加载页面后，所有的页面更新都由`JavaScript`来进行，就好像停留在一个页面上。
+
+### 2.例子
+
+> 用`JavaScript`写一个完整的AJAX代码并不复杂，但是需要注意：AJAX请求是异步执行的，也就是说，要通过回调函数获得响应。
+
+在现代浏览器上写AJAX主要依靠`XMLHttpRequest`对象：
+
+```javascript
+'use strict'
+function success(text) {
+    var textarea = document.getElementById('test-response-text');
+    textarea.value = text;
+}
+
+function fail(code) {
+    var textarea = document.getElementById('test-response-text');
+    textarea.value = 'Error code: ' + code;
+}
+
+var request = new XMLHttpRequest(); // 新建XMLHttpRequest对象
+
+request.onreadystatechange = function () { // 状态发生变化时，函数被回调
+    if (request.readyState === 4) { // 成功完成
+        // 判断响应结果:
+        if (request.status === 200) {
+            // 成功，通过responseText拿到响应的文本:
+            return success(request.responseText);
+        } else {
+            // 失败，根据响应码判断失败原因:
+            return fail(request.status);
+        }
+    } else {
+        // HTTP请求还在继续...
+    }
+}
+
+// 发送请求:
+request.open('GET', '/api/categories');
+request.send();
+
+alert('请求已发送，请等待响应...');
+```
+
+对于低版本的IE，需要换一个`ActiveXObject`对象：
+
+```javascript
+'use strict'
+function success(text) {
+    var textarea = document.getElementById('test-ie-response-text');
+    textarea.value = text;
+}
+
+function fail(code) {
+    var textarea = document.getElementById('test-ie-response-text');
+    textarea.value = 'Error code: ' + code;
+}
+
+var request = new ActiveXObject('Microsoft.XMLHTTP'); // 新建Microsoft.XMLHTTP对象
+
+request.onreadystatechange = function () { // 状态发生变化时，函数被回调
+    if (request.readyState === 4) { // 成功完成
+        // 判断响应结果:
+        if (request.status === 200) {
+            // 成功，通过responseText拿到响应的文本:
+            return success(request.responseText);
+        } else {
+            // 失败，根据响应码判断失败原因:
+            return fail(request.status);
+        }
+    } else {
+        // HTTP请求还在继续...
+    }
+}
+
+// 发送请求:
+request.open('GET', '/api/categories');
+request.send();
+
+alert('请求已发送，请等待响应...');
+```
+
+将标志写法与IE写法混在一起：
+
+```javascript
+var request;
+//通过检测window对象是否有XMLHttpRequest属性来确定浏览器是否支持标准的XMLHttpRequest。
+if (window.XMLHttpRequest) {
+    request = new XMLHttpRequest();
+} else {
+    request = new ActiveXObject('Microsoft.XMLHTTP');
+}
+```
+
+> 不要根据浏览器的`navigator.userAgent`来检测浏览器是否支持某个JavaScript特性，一是因为这个字符串本身可以伪造，二是通过IE版本判断JavaScript特性将非常复杂。
+
+#### 1.理解并分析上述代码
+
+##### 1.预备知识
+
+###### 1.关于readyState 
+
+1.`XMLHttpRequest`对象的`readyState` 属性存有 `XMLHttpRequest` 的状态信息。        
+2.每当 `readyState` 改变时，就会触发 `onreadystatechange` 事件  
+3.下面是 XMLHttpRequest 对象的三个重要的属性：
+
+| 属性               | 描述                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| onreadystatechange | 存储函数（或函数名），每当 readyState 属性改变时，就会调用该函数。 |
+| readyState         | 存有 XMLHttpRequest 的状态。从 0 到 4 发生变化。0: 请求未初始化1: 服务器连接已建立2: 请求已接收3: 请求处理中4: 请求已完成，且响应已就绪 |
+| status             | 200: "OK" 　　404: 未找到页面                                |
+
+4.变量，此属性只读，状态用长度为4的整型表示.定义如下：
+
+| 0 （未初始化）   | 对象已建立，但是尚未初始化（尚未调用open方法）               |
+| ---------------- | ------------------------------------------------------------ |
+| 1 （初始化）     | 已调用send()方法，正在发送请求                               |
+| 2 （发送数据）   | send方法调用完成，但是当前的状态及http头未知                 |
+| 3 （数据传送中） | 已接收部分数据，因为响应及http头不全，这时通过responseBody和responseText获取部分数据会出现错误， |
+| 4 （完成）       | 数据接收完毕，此时可以通过通过responseBody和responseText获取完整的回应数据 |
+
+------
+
+`readyState`是AJAX的状态
+
+- 0 - (未初始化)还没有调用send()方法
+- 1 - (载入)已调用send()方法，正在发送请求
+- 2 - (载入完成)send()方法执行完成，
+- 3 - (交互)正在解析响应内容
+- 4 - (完成)响应内容解析完成，可以在客户端调用了
+
+------
+
+###### 2.关于HTTP状态码(HTTP Status Code)
+
+**HTTP状态码**（英语：HTTP Status Code）是用以表示网页服务器[超文本传输协议](https://baike.baidu.com/item/超文本传输协议)响应状态的3位数字代码。它由 RFC 2616 规范定义的，并得到 RFC 2518、RFC 2817、RFC 2295、RFC 2774 与 RFC 4918 等规范扩展。所有状态码的第一个数字代表了响应的五种状态之一。所示的消息短语是典型的，但是可以提供任何可读取的替代方案。 除非另有说明，状态码是HTTP / 1.1标准（RFC 7231）的一部分。
+
+HTTP状态码的官方注册表由[互联网号码分配局](https://baike.baidu.com/item/互联网号码分配局)（Internet Assigned Numbers Authority）维护。
+
+微软[互联网信息服务](https://baike.baidu.com/item/互联网信息服务) （Microsoft Internet Information Services）有时会使用额外的十进制子代码来获取更多具体信息，但是这些子代码仅出现在响应有效内容和文档中，而不是代替实际的HTTP状态代码。
+
+更多细节，点击
+
+[https://baike.baidu.com/item/HTTP%E7%8A%B6%E6%80%81%E7%A0%81/5053660?fr=aladdin]: 
+
+##### 2.分析部分
+
+当创建了`XMLHttpRequest`对象后，要先设置`onreadystatechange`的回调函数。在回调函数中，通常我们只需通过`readyState === 4`判断请求是否完成，如果已完成，再根据`status === 200`判断是否是一个成功的响应。   
+`XMLHttpRequest`对象的`open()`方法有3个参数，第一个参数指定是`GET`还是`POST`，第二个参数指定URL地址，第三个参数指定是否使用异步，默认是`true`，所以不用写。  
+
+> 注意，千万不要把第三个参数指定为`false`，否则浏览器将停止响应，直到AJAX请求完成。如果这个请求耗时10秒，那么10秒内你会发现浏览器处于“假死”状态。
+
+**最后调用`send()`方法才真正发送请求。`GET`请求不需要参数，`POST`请求需要把body部分以字符串或者`FormData`对象传进去。**
+
+### 3.安全策略与JavaScript请求外域的三种方法
+
+#### 1.安全策略 
+
+由于浏览器的同源政策，在JavaScript使用AJAX发送请求时，URL必须与当前域名保持**完全一致**。
+
+即域名相同，协议相同，端口号相同。
+
+#### 2.三种方法
+
+##### 1.flash
+
+通过Flash插件发送HTTP请求，这种方式可以绕过浏览器的安全限制，但必须安装Flash，并且跟Flash交互。不过Flash用起来麻烦，而且现在用得也越来越少了。
+
+##### 2.代理服务器
+
+通过在同源域名下架设一个代理服务器来转发，JavaScript负责把请求发送到代理服务器：
+
+```
+'/proxy?url=http://www.sina.com.cn'
+```
+
+代理服务器再把结果返回，这样就遵守了浏览器的同源策略。这种方式麻烦之处在于需要服务器端额外做开发。
+
+Tip：浏览器同源策略
+
+> 同源策略，它是由Netscape提出的一个著名的安全策略，现在所bai有的可支持javascript的浏览器都会使用这个策略。
+> 比如说，浏览器的两个tab页中分别打开了http://www.baidu.com/index.html和http: //www.google.com/index.html，其中，JavaScript1和JavaScript3是属于百度的脚本，而 JavaScript2是属于谷歌的脚本，当浏览器的tab1要运行一个脚本时，便会进行同源检查，只有和www.baidu.com同源的脚本才能被执 行，所谓同源，就是指域名、协议、端口相同。所以，tab1只能执行JavaScript1和JavaScript3脚本，而JavaScript2不能 执行，从而防止其他网页对本网页的非法篡改。
+
+##### 3.JSONP
+
+限制：只能用GET请求，且要求返回JavaScript。
+
+更多细节部分参考：
+
+[https://www.cnblogs.com/dowinning/archive/2012/04/19/json-jsonp-jquery.html]: 
+
+### 4.CORS
+
+> CORS全称Cross-Origin Resource Sharing，是HTML5规范定义的如何跨域访问资源。
+
+Origin表示本域，也就是浏览器当前页面的域。当JavaScript向外域（如sina.com）发起请求后，浏览器收到响应后，首先检查`Access-Control-Allow-Origin`是否包含本域，如果是，则此次跨域请求成功，如果不是，则请求失败，JavaScript将无法获取到响应的任何数据。
+
+假设本域是`my.com`，外域是`sina.com`，只要响应头`Access-Control-Allow-Origin`为`http://my.com`，或者是`*`，本次请求就可以成功。
+
+可见，跨域能否成功，取决于对方服务器是否愿意给你设置一个正确的`Access-Control-Allow-Origin`，决定权始终在对方手中。
+
+上面这种跨域请求，称之为“简单请求”。简单请求包括GET、HEAD和POST（POST的Content-Type类型 仅限`application/x-www-form-urlencoded`、`multipart/form-data`和`text/plain`），并且不能出现任何自定义头（例如，`X-Custom: 12345`），通常能满足90%的需求。
+
+更多细节部分参考：
+
+[http://www.w3.org/TR/cors/]: 
+
+## 十一、回调函数
+
+### 1.定义
+
+1.由代码编写者定义  
+2.代码编写者没有主动调用  
+3.函数最终被定义  
+
+### 2.常见的回调函数
+
+- DOM事件回调函数  
+
+  ```javascript
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>测试</title>
+  </head>
+  <body>
+      <button id="btn">不要点我</button>
+      <script type="text/javascript">
+          document.getElementById('btn').onclick = function () {
+              alert('就要点你！')
+          }
+      </script>
+  </body>
+  </html>
+  
+  ```
+
+- 定时器回调函数  
+
+  ```javascript
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>测试</title>
+  </head>
+  <body>
+      <script>
+          setTimeout(function () {
+              alert('到点了！')
+          },2000)
+      </script>
+  </body>
+  </html>
+  ```
+
+- AJAX请求回调函数  
+
+  ```javascript
+  //...
+  request.onreadystatechange = function () { // 状态发生变化时，函数被回调
+      if (request.readyState === 4) { // 成功完成
+          // 判断响应结果:
+          if (request.status === 200) {
+              // 成功，通过responseText拿到响应的文本:
+              return success(request.responseText);
+          } else {
+              // 失败，根据响应码判断失败原因:
+              return fail(request.status);
+          }
+      } else {
+          // HTTP请求还在继续...
+      }
+  }
+  //...
+  ```
+
+- 生命周期回调函数
+
+  s
+
+## 十二、Promise
+
+### 1.预备知识
+
+#### 1.进程(process)与线程(thread)
+
+> [进程](https://zh.wikipedia.org/zh-cn/进程)（process）和[线程](https://zh.wikipedia.org/zh-cn/线程)（thread）是操作系统的基本概念
+
+1. 计算机的核心是CPU，它承担了所有的计算任务。它就像一座工厂，时刻在运行。
+2. 假定工厂的电力有限，一次只能供给一个车间使用。也就是说，一个车间开工的时候，其他车间都必须停工。背后的含义就是，**单个CPU一次只能运行一个任务。**
+3. 进程就好比工厂的车间，它代表CPU所能处理的单个任务。**任一时刻，CPU总是运行一个进程，其他进程处于非运行状态。**
+4. 一个车间里，可以有很多工人。他们协同完成一个任务。
+5. 线程就好比车间里的工人。**一个进程可以包括多个线程。**
+6. 车间的空间是工人们共享的，比如许多房间是每个工人都可以进出的。**这象征一个进程的内存空间是共享的，每个线程都可以使用这些共享内存。**
+7. 可是，每间房间的大小不同，有些房间最多只能容纳一个人，比如厕所。里面有人的时候，其他人就不能进去了。**这代表一个线程使用某些共享内存时，其他线程必须等它结束，才能使用这一块内存。**
+8. 一个防止他人进入的简单方法，就是门口加一把锁。先到的人锁上门，后到的人看到上锁，就在门口排队，等锁打开再进去。**这就叫["互斥锁"](http://zh.wikipedia.org/wiki/互斥锁)（Mutual exclusion，缩写 Mutex）**，防止多个线程同时读写某一块内存区域。
+9. 还有些房间，可以同时容纳n个人，比如厨房。也就是说，如果人数大于n，多出来的人只能在外面等着。这好比**某些内存区域，只能供给固定数目的线程使用。**
+10. 这时的解决方法，就是在门口挂n把钥匙。进去的人就取一把钥匙，出来时再把钥匙挂回原处。后到的人发现钥匙架空了，就知道必须在门口排队等着了。**这种做法叫做["信号量"](http://en.wikipedia.org/wiki/Semaphore_(programming))（Semaphore）**，用来保证多个线程不会互相冲突。
+11. 不难看出，mutex是semaphore的一种特殊情况（n=1时）。也就是说，完全可以用后者替代前者。但是，因为mutex较为简单，且效率高，所以在必须保证资源独占的情况下，还是采用这种设计。
+
+> 操作系统的设计，因此可以归结为三点：
+>
+> （1）以多进程形式，允许多个任务同时运行；
+>
+> （2）以多线程形式，允许单个任务分成不同的部分运行；
+>
+> （3）提供协调机制，一方面防止进程之间和线程之间产生冲突，另一方面允许进程之间和线程之间共享资源。
+
+#### 2.同步与异步
+
+> 在单线程执行模式中，一次只能执行一个任务，如果一个任务没有完成，后面的任务必须等待。
+>
+> 好处是实现简单，执行环境单纯。
+>
+> 坏处是只要有一个任务耗时很长，后面的任务都必须排队等着，会拖延整个程序的执行。
+
+为了解决这个问题，Javascript语言将任务的执行模式分成两种：同步（Synchronous）和异步（Asynchronous）。
+
+同步模式即上文所述，"异步模式"则完全不同，每一个任务有一个或多个回调函数（callback），前一个任务结束后，不是执行后一个任务，而是执行回调函数，后一个任务则是不等前一个任务结束就执行，所以程序的执行顺序与任务的排列顺序是不一致的、异步的。
+
+**"异步模式"非常重要。在浏览器端，耗时很长的操作都应该异步执行，避免浏览器失去响应，最好的例子就是Ajax操作。在服务器端，"异步模式"甚至是唯一的模式，因为执行环境是单线程的，如果允许同步执行所有http请求，服务器性能会急剧下降，很快就会失去响应。**
+
+### 2.概述
+
+由于javascript代码的单线程执行，进行网络请求和浏览器时间时，必须使用异步模式，典型例子就是AJAX，这样做的缺点是大量代码耦合，缺少可读性。由此，引入promise对象:
+
+```javascript
+var ajax = ajaxGet('http://...');
+ajax.ifSuccess(success)
+    .ifFail(fail);
+```
+
+这种链式写法的好处在于，先统一执行AJAX逻辑，不关心如何处理结果，然后，根据结果是成功还是失败，在将来的某个时候调用`success`函数或`fail`函数。
+
+### 3.例子
+
+执行函数
+
+```javascript
+//两个形参都是函数
+function test(resolve, reject) {
+    var timeOut = Math.random() * 2;
+    log('set timeout to: ' + timeOut + ' seconds.');
+    //定时器
+    setTimeout(function () {
+        //如果执行成功，将执行resolve函数
+        if (timeOut < 1) {
+            log('call resolve()...');
+            resolve('200 OK');
+        }
+        //如果执行失败，将执行reject函数
+        else {
+            log('call reject()...');
+            reject('timeout in ' + timeOut + ' seconds.');
+        }
+    }, timeOut * 1000);
+}
+```
+
+创建promise对象
+
+```javascript
+var p1 = new Promise(test);
+var p2 = p1.then(function (result) {
+    console.log('成功：' + result);
+});
+var p3 = p2.catch(function (reason) {
+    console.log('失败：' + reason);
+});
+```
+
+上述代码可简化为：
+
+```javascript
+new Promise(test).then(function (result) {
+    console.log('成功：' + result);
+}).catch(function (reason) {
+    console.log('失败：' + reason);
+});
+```
+
+> Promise最大的好处是在异步执行的流程中，把执行代码和处理结果的代码清晰地分离
+
+Promise还可以做更多的事情，比如，有若干个异步任务，需要先做任务1，如果成功后再做任务2，任何任务失败则不再继续并执行错误处理函数。**即串行执行异步任务。**
+
+#### 1.串行执行异步任务。
+
+```javascript
+job1.then(job2).then(job3).catch(handleError);
+```
+
+其中job1、job2、job3 都是promise对象。
+
+#### 2.并行执行异步任务。
+
+Promise.all()
+
+```javascript 
+var p1 = new Promise(function (resolve, reject) {
+    setTimeout(resolve, 500, 'P1');
+});
+var p2 = new Promise(function (resolve, reject) {
+    setTimeout(resolve, 600, 'P2');
+});
+// 同时执行p1和p2，并在它们都完成后执行then:
+Promise.all([p1, p2]).then(function (results) {
+    console.log(results); // 获得一个Array: ['P1', 'P2']
+});
+```
+
+Promise.race()
+
+```javascript 
+var p1 = new Promise(function (resolve, reject) {
+    setTimeout(resolve, 500, 'P1');
+});
+var p2 = new Promise(function (resolve, reject) {
+    setTimeout(resolve, 600, 'P2');
+});
+//由于p1执行较快，Promise的then()将获得结果'P1'。p2仍在继续执行，但执行结果将被丢弃。
+Promise.race([p1, p2]).then(function (result) {
+    console.log(result); // 'P1'
+});
+```
+
+#### 3.resolve 和reject
+
+> 这两个函数是js的ES6的api
+
+`resolve`函数的作用是，将`Promise`对象的状态从“未完成”变为“成功”（即从 pending 变为 resolved），在异步操作成功时调用，并将异步操作的结果，作为参数传递出去；`reject`函数的作用是，将`Promise`对象的状态从“未完成”变为“失败”（即从 pending 变为 rejected），在异步操作失败时调用，并将异步操作报出的错误，作为参数传递出去。
+
+也就是它们有两个作用：1、改变promise状态； 2、将操作结果作为参数传出去，例如 resolve( result )， 这样后面调用then 才能直接得到 这个result，并将得到的result 作为参数用于 then 里面的函数操作
+
+## 十三、canvas
