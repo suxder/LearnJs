@@ -267,7 +267,7 @@ JSON.stringify(xiaoming, null, '  ');
 
 #### 2.创建对象
 
-##### 1.原形链
+##### 1.原型链
 
 > 当我们用`obj.xxx`访问一个对象的属性时，JavaScript引擎先在当前对象上查找该属性，如果没有找到，就到其原型对象上找，如果还没有找到，就一直上溯到`Object.prototype`对象，最后，如果还没有找到，就只能返回`undefined`。
 
@@ -1456,3 +1456,209 @@ K线图别名蜡烛图：
 
 - 阳线图，红色蜡烛。蜡烛下方实线是当天开盘价，蜡烛上方实线是当天收盘价，两端突出的竖线分别代表当天最高价和最低价。低开高收，代表当天股价上升。
 - 阴线图，绿色蜡烛。蜡烛上方实线是当天开盘价，蜡烛下方则代表当天收盘价，两端突出的竖线分别代表当天最高价和最低价。高开低收，代表当天股价下跌。
+
+## 十四、IIFE
+
+### 1.简介
+
+> 全称：Immediately-Invoked Function expression  
+> 立即执行（调用）函数表达式
+
+#### 示例代码：
+
+```javascript
+<script>
+        (function () { //匿名函数自调用
+            alert('该函数正在执行...')
+        })()
+</script>
+```
+
+```javascript
+<script type="text/javascript">
+        
+        ;(function () {
+            var a = 1
+            function test () {
+            console.log(++a)
+        }
+            window.$ = function () {//向外暴露一个全局函数
+                return {
+                    test: test
+                }
+            }
+        }) ()
+
+        $().test()// 1. $是一个函数 2. ta返回一个对象，有一个text方法
+    </script>
+```
+
+
+
+#### 作用：
+
+- 隐藏实现（在其中定义的变量为局部变量）
+- 不会污染外部（全局）命名空间
+
+## 十五、This再探索
+
+### 实例代码：
+
+```javascript
+<script type="text/javascript">
+        function Person(color) {
+            console.log(this)
+            this.color = color
+            this.getColor = function () {
+                console.log(this)
+                return this.color
+            };
+            this.setColor = function (color) {
+                console.log(this)
+                this.color = color
+            };
+        }
+    </script>
+```
+
+### 1.This 是什么?
+
+- 任何函数本质上都是通过某个对象来调用的，如果没有直接指定就是window 
+- 所有函数内部都有一个变量this 
+- 它的值是调用函数的当前对象 
+  
+
+2.如何确定this的值?
+
+- test(): window
+- p.test(): p
+- new test(): 新创建的对象
+- p.call(obj): obj
+
+#### tip: call()函数
+
+##### 1.定义
+
+call() 方法是预定义的 JavaScript 方法。
+
+它可以用来调用所有者对象作为参数的方法。
+
+通过 call()，您能够使用属于另一个对象的方法。
+
+本例调用 person 的 fullName 方法，并用于 person1：
+
+```javascript
+var person = {
+    fullName: function() {
+        return this.firstName + " " + this.lastName;
+    }
+}
+var person1 = {
+    firstName:"Bill",
+    lastName: "Gates",
+}
+var person2 = {
+    firstName:"Steve",
+    lastName: "Jobs",
+}
+person.fullName.call(person1);  // 将返回 "Bill Gates"
+```
+
+##### 2.带参数的call()方法
+
+call() 方法可以接受参数
+
+```javascript
+var person = {
+  fullName: function(city, country) {
+    return this.firstName + " " + this.lastName + "," + city + "," + country;
+  }
+}
+var person1 = {
+  firstName:"Bill",
+  lastName: "Gates"
+}
+person.fullName.call(person1, "Seattle", "USA");
+//调用person对象的fullName方法，用于person1，并且接受"Seattle", "USA"两个参数。
+//总的来说，调用fullName方法的还是person1，所以此时this指向person1
+```
+
+## 十六、JS中的分号;
+
+> 0.在JS中只有喜不喜欢加分号，没有应不应该加分号。
+
+### 1.必须要加分号的两种情况
+
+#### 1.小括号开头的前一条语句
+
+```javascript
+<script type="text/javascript">
+      var a = 1
+      (function () {
+
+      })()
+      // 错误理解
+      // var a = 1(function () {
+
+      // })()
+</script>
+```
+
+#### 2.中括号开头的前一条语句
+
+```javascript
+<script type="text/javascript">
+      var b = 4
+      [1,4].forEach(element => {
+        
+      })
+      // 错误理解
+      // var b = 4[1,4].forEach(element => {
+
+      // })
+</script>
+```
+
+### 2.解决方法
+
+在行首加分号：
+
+```javascript
+<script type="text/javascript">
+      var b = 4
+      ;[1,4].forEach(element => {
+        
+      })
+</script>
+```
+
+从而保持不加分号的**代码风格**
+
+## 十七、再探原形与原型链
+
+### 1.原型
+
+#### 1.函数的prototype属性
+
+*每一个函数都有一个prototype属性，它默认指向一个object空对象（原型对象）
+
+*原型对象中有一个constructor属性，他指向函数对象
+
+```javascript
+<script type="text/javascript">
+      function Fun () {
+      
+      }
+
+      console.log(Fun.prototype)
+      console.log(Fun.prototype.constructor===Fun)
+      
+      Fun.prototype.text = function text () {
+        alert('Hello,monica!')
+      }
+      var fun = new Fun()
+      console.log(typeof(fun))
+      fun.text()
+</script> 
+```
+
