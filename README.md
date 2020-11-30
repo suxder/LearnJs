@@ -1662,3 +1662,52 @@ person.fullName.call(person1, "Seattle", "USA");
 </script> 
 ```
 
+#### 2.显式原型与隐式原型
+
+1.每个函数都有一个显式原型属性 prototype，默认指向一个空的object对象。
+
+2.每个实例对象都有一个\_\_proto\_\_，可称为隐式原型。
+
+tip：关于构造函数
+
+[https://blog.csdn.net/weixin_41796631/article/details/82939585]: 
+
+![隐式原型与显式原型](C:\Users\14394\Desktop\隐式原型与显式原型.png)
+
+```javascript
+<script type="text/javascript">
+      function Fn () {    //内部语句
+                          //this.prototype = {}
+      }
+      console.log(Fn.prototype)
+      console.log(typeof(new Fn()))
+      var fn = new Fn() //内部语句 this.__proto = Fn.prototype
+                        //从而让实例对象的隐式原型指向对应的构造函数的值。
+      console.log(fn.__proto__)
+      console.log(fn.__proto__===Fn.prototype)
+      Fn.prototype.test = function () {
+        alert('这是一个测试函数，位于原型')
+      }
+      fn.test = function () {
+        alert('这也是一个测试函数，如果你看到我说明我覆盖了原型里的test函数')
+      }
+      fn.test()
+
+</script>
+```
+
+#### 总结：
+
+1.函数的prototype属性：在函数定义时自动添加，默认指向一个空object对象。
+
+2.实例对象的\_\_proto\_\_属性：在创建对象时自动添加，默认为构造函数的prototype值。
+
+3.程序员可以直接操控显式原型，但不能直接操纵隐式原型。
+
+### 2.原型链（隐式原型链）
+
+[![DWuuvt.png](https://s3.ax1x.com/2020/11/30/DWuuvt.png)](https://imgchr.com/i/DWuuvt)
+
+在访问一个对象的属性时，首先在该对对象的属性里面寻找，如果知道则返回
+
+如果没有找到，则沿着原型链寻找（沿着\_proto\_寻找），找到返回、、
