@@ -1,4 +1,4 @@
-# Some notes about Js
+# learnJavaScript
 
 ## 一、this与闭包
 
@@ -15,6 +15,7 @@
     4. 上面三个都没有, 检查是不是有arrow function, 有arrow function的话就是, 那么指向是arrow function的lexical binding 的对象. 就是她的parent. 这种叫做 lexical binding
     
     5. 全部都没有如果不是strict mode那就是window对象了.. strict就是 error (undefined).
+
 ### ***2***.闭包
 
   1.当闭包 返回的函数中含有循环变量或者 会变化的变量时：
@@ -176,13 +177,15 @@ d.toLocaleString(); // 本地时区
 
 ## 四、正则表达式
 
-### 1.正则表达式的某些简化写法
+### （一）、正则表达式的某些简化写法
 
 ```
 /^[0-9a-zA-Z]+&/ ==/^\w+&/
 ```
 
-### 2.一个可以匹配邮箱的正则表达式
+### （二）、正则表达式实例
+
+#### 1.邮箱匹配
 
 ```
 /^[\w+\.]+\@\w+\.(com|org)$/
@@ -207,8 +210,8 @@ d.toLocaleString(); // 本地时区
 ### 1.JSON
 
 1. JSON是JavaScript Object Notation的缩写，它是一种数据交换格式    
-2.  把任何JavaScript对象变成JSON，就是把这个对象序列化成一个JSON格式的字符串，这样才能够通过网络传递给其他计算机。
-3.   如果我们收到一个JSON格式的字符串，只需要把它反序列化成一个JavaScript对象，就可以在JavaScript中直接使用这个对象了。  
+2. 把任何JavaScript对象变成JSON，就是把这个对象序列化成一个JSON格式的字符串，这样才能够通过网络传递给其他计算机。
+3. 如果我们收到一个JSON格式的字符串，只需要把它反序列化成一个JavaScript对象，就可以在JavaScript中直接使用这个对象了。  
 
 ```javascript
 'use strict';
@@ -492,11 +495,11 @@ e.g.
 >
 > 短路运算符就是从左到右的运算中前者满足要求，就不再执行后者了； 可以理解为：
 >
->  &&为取假运算，从左到右依次判断，如果遇到一个假值，就返回假值，以后不再执行，否则返回最后一个真值；
+> &&为取假运算，从左到右依次判断，如果遇到一个假值，就返回假值，以后不再执行，否则返回最后一个真值；
 >
 > || 为取真运算，从左到右依次判断，如果遇到一个真值，就返回真值，以后不再执行，否则返回最后一个假值。
 >
->  下面举个例子吧：
+> 下面举个例子吧：
 >
 > let str
 >
@@ -504,7 +507,7 @@ e.g.
 >
 > 如果str是真值就直接返回了，后面短路就不会被返回了，如果为假值，则会返回后面的foo
 >
->  let str= param && param.prop
+> let str= param && param.prop
 >
 > 如果param如果为真值则返回param.prop属性，否则返回param这个假值，这样在某些地方防止param为undefined的时候还取其属性造成报错。
 
@@ -572,7 +575,7 @@ Javascript能够通过`document.ducument`读取到当前页面的Cookie
 
 >  `为了解决这个问题，服务器在设置Cookie时可以使用httpOnly，设定了httpOnly的Cookie将不能被JavaScript读取。这个行为由浏览器实现，主流浏览器均支持httpOnly选项，IE从IE6 SP1开始支持。`
 >
-> `为了确保安全，服务器端在设置Cookie时，应该始终坚持使用httpOnly。`
+>  `为了确保安全，服务器端在设置Cookie时，应该始终坚持使用httpOnly。`
 
 ##### history
 
@@ -1526,7 +1529,6 @@ K线图别名蜡烛图：
 - 任何函数本质上都是通过某个对象来调用的，如果没有直接指定就是window 
 - 所有函数内部都有一个变量this 
 - 它的值是调用函数的当前对象 
-  
 
 2.如何确定this的值?
 
@@ -1708,6 +1710,175 @@ tip：关于构造函数
 
 [![DWuuvt.png](https://s3.ax1x.com/2020/11/30/DWuuvt.png)](https://imgchr.com/i/DWuuvt)
 
-在访问一个对象的属性时，首先在该对对象的属性里面寻找，如果知道则返回
+在访问一个对象的属性时，首先在该对对象的属性里面寻找，如果知道则返回。
 
-如果没有找到，则沿着原型链寻找（沿着\_proto\_寻找），找到返回、、
+如果没有找到，则沿着原型链寻找（沿着\_proto\_寻找），找到返回。
+
+> tip：函数的显式原型默认指向空的Object空对象（Object不满足）。
+>
+> 任何函数都是Function的实例（包括Function自身）。
+>
+> 原型链的尽头是Object。
+
+#### 1.原型链属性问题
+
+1.在读取对象属性时会自动在原型链中查找。
+
+2.在设置对象属性是不会读取原型链而会直接绑定在对象身上。
+
+```javascript
+<script>
+    function Fn () {
+
+    }
+    Fn.prototype.a = 'Minica'
+    fn1 = new Fn()
+    console.log(fn1.a)
+    fn2 = new Fn()
+    fn2.a = 'Hello,world'
+    console.log(fn2.__proto__.a)
+    console.log(fn1)
+    console.log(fn2)
+</script>
+```
+
+3.在设置方法时一般绑定到原型对象上
+
+```javascript
+  <script>
+    function Person (name,age) {
+      this.name = name
+      this.age = age
+    }
+    monica = new Person('Monica',18)
+    console.log(monica)
+    Person.prototype.setName = function (name) {
+      this.name = name
+    }
+    monica.setName('Monica2')
+    console.log(monica)
+    Tom = new Person('Tom',20)
+    console.log(Tom)
+    console.log(monica.__proto__===Tom.__proto__)
+
+  </script>
+```
+
+#### 2.探索instanceof()
+
+```javascript
+  <script>
+    console.log(Object instanceof Function)//!!
+    console.log(Object instanceof Object)//!!
+    console.log(Function instanceof Function)//!!!
+    console.log(Function instanceof Object)//!!!
+    function Fn () {
+
+    }
+    console.log(Object instanceof Fn)
+  </script>
+```
+
+## 十八、执行上下文与执行上下文栈
+
+### （一）、变量提升与函数提升
+
+#### 1.1变量提升
+
+```html
+	<script>
+    console.log(a)//undefined
+    var a = 520
+	</script>
+```
+
+#### 1.2产生变量提升的原因
+
+**全局执行上下文**
+
+- 在代码开始执行前进行数据预处理
+
+#### 2.1函数提升
+
+```html
+  <script>
+    fn1()//fn1()
+
+    function fn1() {
+      console.log('fn1()')
+    }
+  </script>
+```
+
+### （二）执行上下文栈
+
+#### 1.1
+
+- 在函数调用时产生上下文执行对象
+- 用栈来管理上下文执行对象
+- 全局执行上下文永远在栈底
+
+#### 1.2 面试题1
+
+- 递归调用：在函数内部调用自己
+- 时刻联系到栈的特点
+
+#### 1.3面试题2
+
+- 先执行变量提升，再执行函数提升
+- 做题的时候要有大局观，不要被题目引导思路和关注点
+
+## 十九、作用域与作用域链
+
+### （一）、作用域
+
+#### 1.1
+
+- 全局作用域
+- 函数作用域
+- 隔离变量：不同作用域之间，变量同名不会冲突。
+
+#### 1.2 作用域面试题
+
+- 在找作用域链时按照函数定义来找，而不是函数执行来找。因为函数作用域是代码写完就确定。
+
+> tip：javascript两大神兽 原型与闭包
+
+## 二十、闭包(Closure)
+
+### （一）、循环遍历加监听
+
+### （二）、闭包理解
+
+#### 1.1产生闭包的条件
+
+- 嵌套函数
+- 内部函数引用了外部函数的变量或函数
+- 执行了外部函数
+
+### （三）、常见的闭包
+
+- 将内部函数作为外部函数的返回值
+- **将函数作为实参传递给另外一个函数调用**（？？？）
+
+### （四）、闭包的作用
+
+- 延长函数内部变量的生命周期
+- 允许函数外部对函数内部的变量进行操作
+
+### （五）、闭包的生命周期
+
+- 函数定义执行时闭包产生
+- 函数成为垃圾对象时闭包死亡
+
+### （六）、闭包的作用
+
+#### 1.1自定义模块
+
+- 具有特定功能的JS文件
+- 将特定的数据与函数封装在一个函数内部
+- 只向外部暴露一个包含n个方法的对象或者函数
+- 模块的使用者，只需要调用模块暴露的对象的方法来实现对应的功能
+
+
+
